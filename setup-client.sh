@@ -171,18 +171,26 @@ else
 
   MAIN_ADDRESS="${MAIN_USER}@${SERVER_HOST}"
 
+  # Read sudo password from the terminal (works even in curl | bash)
+  read -rs -p "  Enter sudo password for ${MAIN_USER} (input hidden): " SUDO_PASS </dev/tty
+  echo ""
+  echo ""
+
   # Step 1: upload the public key to a temp file the main user owns
+  info "Uploading public key to server..."
   scp "${SSH_KEY}.pub" "${MAIN_ADDRESS}:/tmp/claude_sync_key.pub"
 
-  # Step 2: use sudo (with -t for PTY so it can prompt for password) to
-  # install the key into claude-git's authorized_keys, then clean up
-  ssh -t "$MAIN_ADDRESS" "
-    sudo bash -c '
+  # Step 2: use sudo -S (reads password from stdin) to install the key
+  ssh "$MAIN_ADDRESS" "
+    echo '${SUDO_PASS}' | sudo -S bash -c '
       cat /tmp/claude_sync_key.pub >> /home/claude-git/.ssh/authorized_keys &&
       chmod 600 /home/claude-git/.ssh/authorized_keys &&
-      chown claude-git:claude-git /home/claude-git/.ssh/authorized_keys
-    ' && rm /tmp/claude_sync_key.pub && echo 'Key installed successfully'
+      chown claude-git:claude-git /home/claude-git/.ssh/authorized_keys &&
+      rm /tmp/claude_sync_key.pub
+    ' 2>&1 | grep -v 'password\|sudo' || true
+    rm -f /tmp/claude_sync_key.pub
   "
+  unset SUDO_PASS
 
   ok "SSH key added to server"
 fi
