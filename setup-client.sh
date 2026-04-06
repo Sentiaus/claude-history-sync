@@ -125,29 +125,25 @@ detect_claude_dir() {
     return
   fi
 
-  # WSL: look for Claude config on the Windows side
+  # WSL: scan Windows drives for .claude
   if grep -qi microsoft /proc/version 2>/dev/null; then
-    # Try E: first (user's drive from our setup), then C:
     for drive in e c d; do
-      WIN_PATH="/mnt/${drive}/Users"
-      if [[ -d "$WIN_PATH" ]]; then
-        # Find the first user with a .claude folder
-        for user_dir in "${WIN_PATH}"/*/; do
-          if [[ -d "${user_dir}.claude" ]]; then
-            echo "${user_dir}.claude"
-            return
-          fi
-        done
-        # Try junction target E:\.claude
-        if [[ -d "/mnt/${drive}/.claude" ]]; then
-          echo "/mnt/${drive}/.claude"
+      # Check drive root first — handles E:\.claude junction (no Users/ needed)
+      if [[ -d "/mnt/${drive}/.claude" ]]; then
+        echo "/mnt/${drive}/.claude"
+        return
+      fi
+      # Check user profile directories
+      for user_dir in "/mnt/${drive}/Users"/*/; do
+        if [[ -d "${user_dir}.claude" ]]; then
+          echo "${user_dir}.claude"
           return
         fi
-      fi
+      done
     done
   fi
 
-  # Not found — create it
+  # Not found — create it at default location
   mkdir -p "$HOME/.claude"
   echo "$HOME/.claude"
 }
@@ -290,19 +286,28 @@ fi
 step "Step 7: Initial commit and push"
 git add -A
 
-if git diff --cached --quiet && git log --oneline -1 &>/dev/null 2>&1; then
-  ok "Nothing new to commit"
+if git diff --cached --quiet; then
+  # Nothing staged after git add -A
+  if git log --oneline -1 &>/dev/null 2>&1; then
+    ok "Nothing new to commit — already seeded"
+  else
+    # Repo is empty (all files gitignored) — create an empty initial commit
+    # so the branch exists on the remote
+    info "No files to commit (all gitignored) — creating empty initial commit..."
+    git -c user.email="claude-sync@$(hostname)" -c user.name="Claude Sync" \
+      commit --allow-empty -m "init: seed from $(hostname) $(date +%Y-%m-%d)"
+  fi
 else
-  git -c user.email="claude-sync@$(hostname)" \
-      -c user.name="Claude Sync" \
-      commit -m "init: seed from $(hostname) $(date +%Y-%m-%d)" 2>/dev/null || true
+  git -c user.email="claude-sync@$(hostname)" -c user.name="Claude Sync" \
+    commit -m "init: seed from $(hostname) $(date +%Y-%m-%d)"
 fi
 
-git push -u origin main 2>&1 || {
-  # First push on a non-empty remote — try pulling first
-  git pull --rebase origin main 2>/dev/null || true
+# Push — show real errors; if remote has commits from another device, rebase first
+if ! git push -u origin main; then
+  warn "Push rejected — pulling remote history first (another device may have pushed)..."
+  git pull --rebase origin main
   git push -u origin main
-}
+fi
 ok "Pushed to server"
 
 # ── Step 8: Add Claude Code Stop hook ────────────────────────────────────────
