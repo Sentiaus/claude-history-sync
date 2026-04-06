@@ -38,15 +38,11 @@ git clone https://github.com/Sentiaus/claude-history-sync
 bash claude-history-sync/setup-server.sh
 ```
 
-At the end, the script prints a connection command and a **one-time password**:
+At the end, the script prints the connection command to run on client devices:
 
 ```
 bash setup-client.sh "claude-git@192.168.1.42"
-
-One-time password: xK9mP2qR8nLzTwVy
 ```
-
-> **Important:** Save this password — you'll need it in Step 2. It is NOT your main server password. After the first client connects, lock it with `sudo passwd -l claude-git`.
 
 ### Step 2 — Every client device
 
@@ -55,6 +51,8 @@ Run the command printed by Step 1:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Sentiaus/claude-history-sync/main/setup-client.sh | bash -s -- "claude-git@192.168.1.42"
 ```
+
+You'll be asked for your **main server username** (e.g. `ubuntu`) and its password once — this is used to add your SSH key via `sudo`. After that, all connections are key-based.
 
 That's it. Your next Claude session will auto-sync.
 

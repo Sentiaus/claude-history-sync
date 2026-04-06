@@ -155,38 +155,31 @@ fi
 
 # ── Step 4: Copy public key to server ─────────────────────────────────────────
 step "Step 4: Copying SSH key to server"
-echo ""
-echo -e "  ${YELLOW}You will be prompted for ${SERVER_ADDRESS}'s password — this is the ONLY time.${RESET}"
-echo -e "  After this, all connections use your SSH key automatically."
-echo ""
 
 if ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=5 \
     "${SERVER_ADDRESS}" "true" 2>/dev/null; then
   ok "SSH key already accepted by server — skipping copy"
 else
-  echo -e "  ${YELLOW}Enter the one-time password shown at the end of setup-server.sh.${RESET}"
-  echo -e "  ${YELLOW}This is NOT your main server/sudo password — it's the temporary${RESET}"
-  echo -e "  ${YELLOW}'claude-git' password printed in the box when the server was set up.${RESET}"
+  echo ""
+  echo -e "  The ${CYAN}claude-git${RESET} user on the server uses git-shell (no password login)."
+  echo -e "  We'll add your key via your ${BOLD}main server account${RESET} using sudo."
+  echo ""
+  read -r -p "  Enter your main server username (your regular login): " MAIN_USER
+  echo ""
+  echo -e "  ${YELLOW}You'll be prompted for ${MAIN_USER}'s password — this is the ONLY time.${RESET}"
   echo ""
 
-  if command -v ssh-copy-id &>/dev/null; then
-    ssh-copy-id -i "${SSH_KEY}.pub" "$SERVER_ADDRESS"
-  else
-    # Fallback: manual key copy
-    PUB_KEY="$(cat "${SSH_KEY}.pub")"
-    ssh "$SERVER_ADDRESS" "
-      mkdir -p ~/.ssh
-      chmod 700 ~/.ssh
-      touch ~/.ssh/authorized_keys
-      chmod 600 ~/.ssh/authorized_keys
-      grep -qF '${PUB_KEY}' ~/.ssh/authorized_keys || echo '${PUB_KEY}' >> ~/.ssh/authorized_keys
-    "
-  fi
-  ok "SSH key copied to server"
+  PUB_KEY="$(cat "${SSH_KEY}.pub")"
+  MAIN_ADDRESS="${MAIN_USER}@${SERVER_HOST}"
 
-  echo ""
-  warn "Security: run this on your server to lock the one-time password (key auth only from now on):"
-  warn "  sudo passwd -l claude-git"
+  # Append key to claude-git's authorized_keys via sudo
+  ssh "$MAIN_ADDRESS" \
+    "echo '${PUB_KEY}' | sudo tee -a /home/claude-git/.ssh/authorized_keys > /dev/null && \
+     sudo chmod 600 /home/claude-git/.ssh/authorized_keys && \
+     sudo chown claude-git:claude-git /home/claude-git/.ssh/authorized_keys && \
+     echo 'Key added'"
+
+  ok "SSH key added to server"
 fi
 
 # ── Step 5: Test SSH connection ───────────────────────────────────────────────
