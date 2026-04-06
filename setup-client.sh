@@ -227,12 +227,17 @@ fi
 
 # ── Step 5: Test SSH connection ───────────────────────────────────────────────
 step "Step 5: Testing SSH connection"
-if ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=10 \
-    "$SERVER_ADDRESS" "git-receive-pack --advertise-refs ~/claude-history.git" \
-    &>/dev/null; then
+info "Testing git connection to server (errors will be shown)..."
+if GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -o IdentitiesOnly=yes -o BatchMode=yes" \
+    git ls-remote "$REPO_URI" &>/dev/null; then
   ok "SSH connection to server works"
 else
-  error "Cannot connect to $SERVER_ADDRESS. Ensure the server is reachable and setup-server.sh was run."
+  echo ""
+  warn "Connection test failed. Running again with verbose SSH output to show the error:"
+  GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -o IdentitiesOnly=yes -v" \
+    git ls-remote "$REPO_URI" 2>&1 | grep -E "debug1|Permission|fatal|error|Warning" || true
+  echo ""
+  error "Cannot connect to $SERVER_ADDRESS. Check the output above for the cause."
 fi
 
 # ── Step 6: Initialise git repo in .claude ────────────────────────────────────
