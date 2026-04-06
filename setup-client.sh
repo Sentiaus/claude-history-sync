@@ -90,7 +90,7 @@ echo ""
 read -r -p "  Install/connect Tailscale on this device? [y/N] " INSTALL_TS </dev/tty
 echo ""
 
-if [[ "${INSTALL_TS,,}" == "y" || "${INSTALL_TS,,}" == "yes" ]]; then
+if [[ "$INSTALL_TS" =~ ^[Yy]([Ee][Ss])?$ ]]; then
   if command -v tailscale &>/dev/null; then
     ok "Tailscale already installed"
   else

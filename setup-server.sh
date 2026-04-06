@@ -123,7 +123,7 @@ read -r -p "  Install Tailscale for remote access? [y/N] " INSTALL_TS </dev/tty
 echo ""
 
 TAILSCALE_IP=""
-if [[ "${INSTALL_TS,,}" == "y" || "${INSTALL_TS,,}" == "yes" ]]; then
+if [[ "$INSTALL_TS" =~ ^[Yy]([Ee][Ss])?$ ]]; then
   if command -v tailscale &>/dev/null; then
     ok "Tailscale already installed"
   else
