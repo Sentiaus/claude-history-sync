@@ -81,6 +81,40 @@ if ! command -v ssh-copy-id &>/dev/null; then
 fi
 ok "All dependencies present"
 
+# ── Step 1b: Tailscale (optional — needed to reach server outside home network) ──
+step "Step 1b: Tailscale (for remote access outside your home network)"
+echo ""
+echo "  If your server IP starts with 100.x.x.x, it's a Tailscale IP and"
+echo "  you need Tailscale running on this machine to reach it."
+echo ""
+read -r -p "  Install/connect Tailscale on this device? [y/N] " INSTALL_TS </dev/tty
+echo ""
+
+if [[ "${INSTALL_TS,,}" == "y" || "${INSTALL_TS,,}" == "yes" ]]; then
+  if command -v tailscale &>/dev/null; then
+    ok "Tailscale already installed"
+  else
+    if command -v apt &>/dev/null; then
+      info "Installing Tailscale..."
+      curl -fsSL https://tailscale.com/install.sh | sh
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+      error "On macOS, install Tailscale from the App Store or via 'brew install tailscale', then re-run this script."
+    else
+      error "Install Tailscale from https://tailscale.com/download then re-run this script."
+    fi
+  fi
+  info "Connecting to Tailscale (a browser login may open)..."
+  sudo tailscale up
+  ok "Tailscale connected"
+else
+  if [[ "$SERVER_HOST" =~ ^100\. ]]; then
+    warn "Server IP $SERVER_HOST looks like a Tailscale address."
+    warn "Connection will fail unless Tailscale is already running on this device."
+  else
+    ok "Skipping Tailscale (LAN IP — not needed on local network)"
+  fi
+fi
+
 # ── Step 2: Detect .claude directory ─────────────────────────────────────────
 step "Step 2: Locating Claude Code config directory"
 
