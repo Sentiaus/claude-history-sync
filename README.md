@@ -38,11 +38,15 @@ git clone https://github.com/Sentiaus/claude-history-sync
 bash claude-history-sync/setup-server.sh
 ```
 
-At the end, the script prints a connection command like:
+At the end, the script prints a connection command and a **one-time password**:
 
 ```
 bash setup-client.sh "claude-git@192.168.1.42"
+
+One-time password: xK9mP2qR8nLzTwVy
 ```
+
+> **Important:** Save this password — you'll need it in Step 2. It is NOT your main server password. After the first client connects, lock it with `sudo passwd -l claude-git`.
 
 ### Step 2 — Every client device
 

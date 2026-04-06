@@ -164,6 +164,11 @@ if ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=5 \
     "${SERVER_ADDRESS}" "true" 2>/dev/null; then
   ok "SSH key already accepted by server — skipping copy"
 else
+  echo -e "  ${YELLOW}Enter the one-time password shown at the end of setup-server.sh.${RESET}"
+  echo -e "  ${YELLOW}This is NOT your main server/sudo password — it's the temporary${RESET}"
+  echo -e "  ${YELLOW}'claude-git' password printed in the box when the server was set up.${RESET}"
+  echo ""
+
   if command -v ssh-copy-id &>/dev/null; then
     ssh-copy-id -i "${SSH_KEY}.pub" "$SERVER_ADDRESS"
   else
@@ -178,6 +183,10 @@ else
     "
   fi
   ok "SSH key copied to server"
+
+  echo ""
+  warn "Security: run this on your server to lock the one-time password (key auth only from now on):"
+  warn "  sudo passwd -l claude-git"
 fi
 
 # ── Step 5: Test SSH connection ───────────────────────────────────────────────

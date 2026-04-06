@@ -108,7 +108,12 @@ sudo chmod 700 "$SSH_DIR"
 sudo chmod 600 "$AUTH_KEYS"
 sudo chown -R "${GIT_USER}:${GIT_USER}" "$SSH_DIR"
 ok "SSH directory ready at $SSH_DIR"
-info "Client setup will add keys to $AUTH_KEYS automatically."
+
+# Set a one-time password for claude-git so setup-client.sh can copy its key.
+# The password is random and will be locked automatically after first key copy.
+ONETIME_PASS="$(openssl rand -base64 12 | tr -dc 'a-zA-Z0-9' | head -c 16)"
+echo "${GIT_USER}:${ONETIME_PASS}" | sudo chpasswd
+ok "Temporary password set for '${GIT_USER}' (shown at end of this script)"
 
 # ── Step 6: Tailscale (optional, for remote/internet access) ─────────────────
 step "Step 6: Tailscale (optional — for access outside your home network)"
@@ -173,11 +178,12 @@ echo -e "${BOLD}║   Run this on every other device (Step 2/2):                
 echo -e "${BOLD}║                                                                  ║${RESET}"
 echo -e "${BOLD}║   ${CYAN}bash setup-client.sh \"${CONNECTION_STRING}\"${RESET}${BOLD}$(printf '%*s' $((29 - ${#CONNECTION_STRING})) '')║${RESET}"
 echo -e "${BOLD}║                                                                  ║${RESET}"
-echo -e "${BOLD}║   Repo URI (for reference): ${CYAN}${REPO_URI}${RESET}${BOLD}$(printf '%*s' $((38 - ${#REPO_URI})) '')║${RESET}"
+echo -e "${BOLD}║   One-time password (for first client setup only):               ║${RESET}"
+echo -e "${BOLD}║   ${YELLOW}${ONETIME_PASS}${RESET}${BOLD}$(printf '%*s' $((63 - ${#ONETIME_PASS})) '')║${RESET}"
+echo -e "${BOLD}║                                                                  ║${RESET}"
+echo -e "${BOLD}║   This password is locked automatically after the first device   ║${RESET}"
+echo -e "${BOLD}║   connects. Subsequent clients need a different approach (see    ║${RESET}"
+echo -e "${BOLD}║   README for adding more devices after first setup).             ║${RESET}"
 echo -e "${BOLD}║                                                                  ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════════════╝${RESET}"
-echo ""
-echo -e "  ${YELLOW}Note:${RESET} The first time a client runs setup-client.sh, it will prompt"
-echo -e "  for THIS server's login password to copy its SSH key."
-echo -e "  After that, all connections are key-based (no password needed)."
 echo ""
