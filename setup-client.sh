@@ -169,15 +169,20 @@ else
   echo -e "  ${YELLOW}You'll be prompted for ${MAIN_USER}'s password — this is the ONLY time.${RESET}"
   echo ""
 
-  PUB_KEY="$(cat "${SSH_KEY}.pub")"
   MAIN_ADDRESS="${MAIN_USER}@${SERVER_HOST}"
 
-  # Append key to claude-git's authorized_keys via sudo
-  ssh "$MAIN_ADDRESS" \
-    "echo '${PUB_KEY}' | sudo tee -a /home/claude-git/.ssh/authorized_keys > /dev/null && \
-     sudo chmod 600 /home/claude-git/.ssh/authorized_keys && \
-     sudo chown claude-git:claude-git /home/claude-git/.ssh/authorized_keys && \
-     echo 'Key added'"
+  # Step 1: upload the public key to a temp file the main user owns
+  scp "${SSH_KEY}.pub" "${MAIN_ADDRESS}:/tmp/claude_sync_key.pub"
+
+  # Step 2: use sudo (with -t for PTY so it can prompt for password) to
+  # install the key into claude-git's authorized_keys, then clean up
+  ssh -t "$MAIN_ADDRESS" "
+    sudo bash -c '
+      cat /tmp/claude_sync_key.pub >> /home/claude-git/.ssh/authorized_keys &&
+      chmod 600 /home/claude-git/.ssh/authorized_keys &&
+      chown claude-git:claude-git /home/claude-git/.ssh/authorized_keys
+    ' && rm /tmp/claude_sync_key.pub && echo 'Key installed successfully'
+  "
 
   ok "SSH key added to server"
 fi
