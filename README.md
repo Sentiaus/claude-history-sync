@@ -28,13 +28,13 @@ A [Claude Code Stop hook](https://docs.anthropic.com/en/docs/claude-code/hooks) 
 SSH into your home server and run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/claude-history-sync/main/setup-server.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Sentiaus/claude-history-sync/main/setup-server.sh | bash
 ```
 
 Or clone the repo and run locally:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/claude-history-sync
+git clone https://github.com/Sentiaus/claude-history-sync
 bash claude-history-sync/setup-server.sh
 ```
 
@@ -49,7 +49,7 @@ bash setup-client.sh "claude-git@192.168.1.42"
 Run the command printed by Step 1:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/claude-history-sync/main/setup-client.sh | bash -s -- "claude-git@192.168.1.42"
+curl -fsSL https://raw.githubusercontent.com/Sentiaus/claude-history-sync/main/setup-client.sh | bash -s -- "claude-git@192.168.1.42"
 ```
 
 That's it. Your next Claude session will auto-sync.
