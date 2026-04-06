@@ -164,7 +164,7 @@ else
   echo -e "  The ${CYAN}claude-git${RESET} user on the server uses git-shell (no password login)."
   echo -e "  We'll add your key via your ${BOLD}main server account${RESET} using sudo."
   echo ""
-  read -r -p "  Enter your main server username (your regular login): " MAIN_USER
+  read -r -p "  Enter your main server username (your regular login): " MAIN_USER </dev/tty
   echo ""
   echo -e "  ${YELLOW}You'll be prompted for ${MAIN_USER}'s password — this is the ONLY time.${RESET}"
   echo ""

@@ -119,7 +119,7 @@ echo ""
 echo "  Tailscale creates a private encrypted network between your devices."
 echo "  Without it, you can only sync when on the same WiFi as this server."
 echo ""
-read -r -p "  Install Tailscale for remote access? [y/N] " INSTALL_TS
+read -r -p "  Install Tailscale for remote access? [y/N] " INSTALL_TS </dev/tty
 echo ""
 
 TAILSCALE_IP=""
